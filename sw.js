@@ -1,4 +1,4 @@
-const cacheName = 'v0.0.1';
+const cacheName = 'v0.0.2';
 const appShellFiles = [
     './',
     './index.html',
