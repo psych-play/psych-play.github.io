@@ -1,0 +1,62 @@
+body{
+    font-family: arial, sans-serif;
+    font-size: 16px;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+}
+* {
+    font-size: inherit;
+}
+main{
+    text-align: center;
+    overflow: hidden;
+    touch-action: manipulation;
+    position: absolute; top: 0; bottom: 0; right: 0; left: 0;
+    background-color: #3fd0c9;
+}
+input{
+    text-align: center;
+}
+.topMiddle{
+    margin: 0 10px;
+}
+#updateDiv{
+    position: absolute; top: 0; bottom: 0; right: 0; left: 0;
+    background-color: #3fd0c9;
+    z-index: 10;
+    display: flex; justify-content: center; flex-direction: column;
+}
+#topDiv{
+    margin: 10px 0 15px 0;
+}
+#gameDiv{
+    width: 90%; height: calc(100vh - 50px);
+    -webkit-transform: translate(5%, 0);
+    transform: translate(5%, 0);
+    overflow-x: hidden; overflow-y: scroll;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+::-webkit-scrollbar {
+    display: none;
+}
+#pickNotifyDiv{
+    position: absolute; top: 0; bottom: 0; right: 0; left: 0;
+    background-color: #3fd0c9;
+    z-index: 10;
+}
+.listing{
+    margin: 10px 0;
+}
+.boldFont{
+    font-weight: bold;
+    font-size: 20px;
+}
+.gameBlock{
+    margin: 10px 0 0 0;
+}

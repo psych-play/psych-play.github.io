@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Psych!</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel='stylesheet' href='css/style.css'>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+    <script>
+        if('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(function (reg) {
+                window.checkUpdate = function() {
+                    console.log("Check update");
+                    if (typeof game === 'undefined' || game.gameState.turn === -1) reg.update();
+                }
+                document.addEventListener("visibilitychange", function () {
+                    console.log("Vis change: " + document.visibilityState);
+                    if (document.visibilityState === 'visible') window.checkUpdate();
+                });
+                //window.addEventListener("focus", window.checkUpdate);
+                reg.onupdatefound = function () {
+                    document.getElementById("updateDiv").style.display = "flex";
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = function () {
+                        console.log("State change: " + installingWorker.state);
+                        if (installingWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                            // Preferably, display a message asking the user to reload...
+                            //alert("Please refresh page to update to new version!");
+                            console.log("Reloading");
+                            //window.location.href = window.location.href;
+                            window.location.reload();
+                        }
+                    };
+                };
+            });
+        };
+    </script>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Psych!">
+    <link rel="apple-touch-icon" href="icon-152x152.png">
+    <meta name="msapplication-TileImage" content="icon-144x144.png">
+    <meta name="msapplication-TileColor" content="#3fd0c9">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+</head>
+<body>
+    <main>
+        <div id="updateDiv" style="display: none">
+            Updating to newest version...
+        </div>
+        <div id="topDiv">
+            <div style="display: inline">
+                <input id="nameIn" size=6 maxlength=6 placeholder="Name" type="text">
+            </div>
+            <div id="joinInput" class="topMiddle" style="display: inline">
+                Connect to:
+                <input id="gameIn" size=6 maxlength=6 placeholder="Host" type="text" disabled>
+            </div>
+            <div id="leaveButton" class="topMiddle" style="display: none">
+                <button onclick="game.leave()">Leave Game</button>
+            </div>
+            <div id="playerCount" style="display: none">
+                (0)
+            </div>
+        </div>
+        <div id="gameDiv" style="display: block">
+            <div id="qPackSel" class="gameBlock" style="display: none">
+            </div>
+            <div id="loadingDiv" class="gameBlock" style="display: none">
+                Loading
+            </div>
+            <div id="qText" class="gameBlock" style="display: none">
+                Game
+            </div>
+            <div id="qDiv" class="gameBlock" style="display: none">
+                <div id="qInput" style="display: block">
+                    <textarea id="qIn" class="listing" name="Answer" cols="30" rows="10"></textarea>
+                </div>
+                <div id="qSubmit" style="display: block">
+                    <button id="qSubmitButton" onclick="game.submit()" disabled>Submit</button>
+                </div>
+            </div>
+            <div id="answeredDiv" class="gameBlock" style="display: none">
+            </div>
+            <div id="answerPickDiv" class="gameBlock" style="display: none">
+            </div>
+            <div id="scoresDiv" class="gameBlock" style="display: none">
+            </div>
+            <div id="readyDiv" class="gameBlock" style="display: none">
+                <button id="readyButton" onclick="game.ready()">Ready</button>
+            </div>
+            <div id="pickNotifyDiv" class="gameBlock" style="display: none">
+                You Picked X
+            </div>
+        </div>
+    </main>
+    <script id="peerjsScript" src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script src="js/webapp.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/networking.js"></script>
+    <script src="js/player.js"></script>
+</body>
+</html>
