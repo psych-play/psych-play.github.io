@@ -37,7 +37,7 @@ Network.prototype.destroyPeer = function() {
     }
 }
 Network.prototype.createPeer = function(name) {
-    var myId = "psych-" + name;
+    var myId = utils.nameToPeerjsID(name);
     // Create own peer object with connection to shared PeerJS server
     net.peer = new peerjs.Peer(myId, {
         host: 'peerjs-openconsole.herokuapp.com',
@@ -76,7 +76,7 @@ Network.prototype.createPeer = function(name) {
     });
     net.peer.on('close', function() {
         net.conns = [];
-        game.others = [];
+        //game.others = [];
         return;
     });
     net.peer.on('error', function (err) {
@@ -90,7 +90,12 @@ Network.prototype.createPeer = function(name) {
                 //game.others = [];
                 //err.message.slice(32);// "Could not connect to peer psych-hgshjk"
                 //game.disconnectFrom(null);
-                game.peerUnavail();
+                if (net.conns.length === 0) {
+                    // Wrong peer name
+                    input.enableInputs();
+                    input.gameIn.value = "";
+                    input.gameIn.placeholder = "N/A";
+                }
                 break;
             case 'unavailable-id':
                 net.peer.noReconnect = true;
@@ -104,15 +109,17 @@ Network.prototype.createPeer = function(name) {
 Network.prototype.getConnName = function(conn) {
     return conn.peer.slice(6);
 }
+Network.prototype.getConnectedNames = function() {
+    let others = [];
+    for (let i = 0; i < net.conns.length; i++) others.push(net.conns[i].name);
+    return others;
+}
 Network.prototype.setupConnHandlers = function(conn, initiator) {
     conn.name = net.getConnName(conn);
-    console.log("Setup handle: " + conn.name);
     conn.on('open', function() {
-        if (initiator) {
-            net.addConnection(conn, false);
-        } else {
-            net.addConnection(conn, conn.metadata.player.ready);
-            var msg = { "type":"initial", "others":game.others, "self":game.player };
+        if (!initiator) {
+            let gameState = net.addConnection(conn, conn.metadata.player);
+            let msg = { "type":"initial", "gameState":gameState };
             net.signal(conn, msg);
         }
     });
@@ -120,32 +127,30 @@ Network.prototype.setupConnHandlers = function(conn, initiator) {
         net.handleMessage(conn, JSON.parse(data));
     });
     conn.on('close', function () {
-        if (net.conns.indexOf(conn) > -1) {
+        if (net.conns.indexOf(conn) > -1)
             net.conns.splice(net.conns.indexOf(conn), 1);
-            game.others.splice(net.conns.indexOf(conn), 1);
-            game.disconnectFrom(conn.name);
-        }
+        game.disconnectFrom(conn.name);
         conn = null;
     });
+    conn.on('error', function (e) { console.error(e); });
+    console.log("Setup handle: " + conn.name);
 }
-Network.prototype.addConnection = function (conn, ready) {
+Network.prototype.addConnection = function (conn, player) {
     conn.isActive = 6;
     net.conns.push(conn);
 
     console.log("Connected to: " + conn.peer);
-    player.addFriend(conn.name);
-    game.connectTo(conn.name);
-    game.others.push({ "name":conn.name, "ready":ready });
+    return game.connectTo(player);
 }
 
 
 Network.prototype.requestConnection = function (name) {
     var validName = player.sanitizeName(name);
     if (validName === "") return;
-    var otherId = "psych-" + validName;
+    var otherId = utils.nameToPeerjsID(validName);
     var conn = net.peer.connect(otherId, {
         reliable: true,
-        metadata: { "player":game.player }
+        metadata: { "player":game.getPlayerInitial() }
     });
     net.setupConnHandlers(conn, true);
     input.blockInputs();
@@ -167,13 +172,21 @@ Network.prototype.handleMessage = function (conn, message) {
     console.log("Receive " + JSON.stringify(message));
     switch (message.type) {
         case "initial":
-            var other = game.queryOthers(conn.name);
-            other.ready = message.self.ready;
+            conn.isActive = 6;
+            net.conns.push(conn);
+
+            console.log("Connected to: " + conn.peer);
+            game.joinGame(conn.name, message.gameState);
+            /*
+            // TODO use message.me and message.gameState to reconnect to game if needed
+            if (message.you !== null) game.overridePlayerInitial(message.you);
+            net.addConnection(conn, message.me);
+            let others = net.getConnectedNames();
             for (var i = 0; i < message.others.length; i++) {
-                //if (message.others[i].name === game.player.name) continue;
-                if (game.queryOthers(message.others[i].name) !== null) continue;
-                net.requestConnection(message.others[i].name);
-            }
+                if (message.others[i] === game.player.name) continue;
+                if (others.indexOf(message.others[i]) > -1) continue;
+                net.requestConnection(message.others[i]);
+            }*/
             break;
         case "ready":
             game.setOtherReady(conn.name, message.ready);
@@ -181,8 +194,8 @@ Network.prototype.handleMessage = function (conn, message) {
         case "qPack":
             game.remotePickQPack(message.qPack);
             break;
-        case "setId":
-            game.setOtherId(conn.name, message.id, message.qPack);
+        case "startGame":
+            game.startWithQPack(message.qPack);
             break;
         case "answer":
             game.setAnswer(conn.name, utils.deSanitizeEmojis(message.answer));
@@ -201,8 +214,8 @@ Network.prototype.sendQsPackPick = function (qPack) {
     var msg = { "type":"qPack", "qPack":qPack };
     net.signalAll(msg);
 }
-Network.prototype.sendId = function (id, qPack) {
-    var msg = { "type":"setId", "id":id, "qPack":qPack };
+Network.prototype.startWithQPack = function (qPack) {
+    var msg = { "type":"startGame", "qPack":qPack };
     net.signalAll(msg);
 }
 Network.prototype.sendAnswer = function (answer) {
@@ -214,8 +227,10 @@ Network.prototype.sendPick = function (pickName) {
     net.signalAll(msg);
 }
 Network.prototype.leave = function () {
-    for (var i = 0; i < net.conns.length; i++) {
-        net.conns[i].close();
+    let i = 0;
+    while (net.conns.length > 0) {
+        net.conns[i % net.conns.length].close();
+        i++;
     }
 }
 

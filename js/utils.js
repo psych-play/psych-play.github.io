@@ -26,6 +26,9 @@ Utils.prototype.deSanitizeEmojis = function (str) {
     });
 }
 
+Utils.prototype.nameToPeerjsID = function (str) {
+    return "psych-" + str;
+}
 
 Utils.prototype.validQuestion = function (str) {
     return str.indexOf('_') > -1;

@@ -1,6 +1,6 @@
 //document.doCache = false;
 
-//document.body.addEventListener("click", function (e) { e.preventDefault(); });
+document.body.addEventListener("touchmove", function (e) { e.preventDefault(); });
 
 /*
 document.realVersion = null;

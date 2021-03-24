@@ -83,13 +83,14 @@
                     <button id="qSubmitButton" onclick="game.submit()" disabled>Submit</button>
                 </div>
             </div>
-            <div id="answeredDiv" class="gameBlock" style="display: none">
+            <div id="readyWaitDiv" class="gameBlock" style="display: none">
             </div>
             <div id="answerPickDiv" class="gameBlock" style="display: none">
             </div>
             <div id="scoresDiv" class="gameBlock" style="display: none">
             </div>
             <div id="readyDiv" class="gameBlock" style="display: none">
+                <div class="listing boldFont">Actions</div>
                 <button id="readyButton" onclick="game.ready()">Ready</button>
             </div>
             <div id="pickNotifyDiv" class="gameBlock" style="display: none">
@@ -101,6 +102,8 @@
     <script src="js/webapp.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/input.js"></script>
+    <script src="js/qpack.js"></script>
+    <script src="js/gameState.js"></script>
     <script src="js/game.js"></script>
     <script src="js/networking.js"></script>
     <script src="js/player.js"></script>
